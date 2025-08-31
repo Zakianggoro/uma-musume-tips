@@ -42,115 +42,112 @@ export default function MainPage() {
     async function fetchCharacters() {
       const { data, error } = await supabase.from("characters").select("*");
       if (error) console.error(error);
-      else setCharacters(data as Character[]);
+      else {
+        setCharacters(data as Character[]);
+        if (data && data.length > 0) setSelectedCharacter(data[0]);
+      }
     }
     fetchCharacters();
   }, []);
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white p-6">
+    <main className="min-h-screen bg-gray-900 text-white p-6 flex flex-col">
       <h1 className="text-3xl font-bold mb-6">Uma Musume Characters</h1>
 
-      {/* Character Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {characters.map((char) => (
-          <div
-            key={char.id}
-            className="bg-gray-800 rounded-lg shadow-lg p-4 cursor-pointer hover:scale-105 transition"
-            onClick={() => setSelectedCharacter(char)}
-          >
-            <img
-              src={char.image}
-              alt={char.name}
-              className="w-full h-40 object-cover rounded-lg"
-            />
-            <h2 className="mt-2 text-lg font-semibold text-center">
-              {char.name}
-            </h2>
-          </div>
-        ))}
-      </div>
+      <div className="flex flex-1 border border-gray-700 rounded-lg overflow-hidden shadow-lg">
+        {/* Sidebar */}
+        <aside className="w-64 bg-gray-800 overflow-y-auto">
+          <ul>
+            {characters.map((char) => (
+              <li
+                key={char.id}
+                className={`cursor-pointer px-4 py-3 border-b border-gray-700 hover:bg-gray-700 ${
+                  selectedCharacter?.id === char.id ? "bg-gray-700 font-semibold" : ""
+                }`}
+                onClick={() => setSelectedCharacter(char)}
+              >
+                {char.name}
+              </li>
+            ))}
+          </ul>
+        </aside>
 
-      {/* Detail Panel (Modal) */}
-      {selectedCharacter && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-6 rounded-lg max-w-2xl w-full relative overflow-y-auto max-h-[80vh]">
-            <button
-              className="absolute top-2 right-2 text-red-400 hover:text-red-600"
-              onClick={() => setSelectedCharacter(null)}
-            >
-              ✖
-            </button>
-
-            <div className="flex gap-4">
-              <img
-                src={selectedCharacter.image}
-                alt={selectedCharacter.name}
-                className="w-40 h-40 object-cover rounded-lg"
-              />
-              <div>
-                <h2 className="text-2xl font-bold">{selectedCharacter.name}</h2>
-                <p>Overall: {selectedCharacter.overall}</p>
-                <p>Ease: {selectedCharacter.ease}</p>
-                <p>Height: {selectedCharacter.cm} cm</p>
-                <p>Trials: {selectedCharacter.t_trials}</p>
-                <p>Unique Skill: {selectedCharacter.unique_skill}</p>
+        {/* Detail Panel */}
+        <section className="flex-1 bg-gray-800 p-6 overflow-y-auto">
+          {selectedCharacter ? (
+            <>
+              <div className="flex gap-6 mb-6">
+                <img
+                  src={selectedCharacter.image}
+                  alt={selectedCharacter.name}
+                  className="w-48 h-48 object-cover rounded-lg flex-shrink-0"
+                />
+                <div>
+                  <h2 className="text-4xl font-bold mb-2">{selectedCharacter.name}</h2>
+                  <p>Overall: {selectedCharacter.overall}</p>
+                  <p>Ease: {selectedCharacter.ease}</p>
+                  <p>Height: {selectedCharacter.cm} cm</p>
+                  <p>Trials: {selectedCharacter.t_trials}</p>
+                  <p>Unique Skill: {selectedCharacter.unique_skill}</p>
+                </div>
               </div>
-            </div>
 
-            {/* Stats Section */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <p>🏇 Turf: {selectedCharacter.turf}</p>
-              <p>🌋 Dirt: {selectedCharacter.dirt}</p>
-              <p>⚡ Sprint: {selectedCharacter.sprint}</p>
-              <p>🏃 Mile: {selectedCharacter.mile}</p>
-              <p>🏞️ Medium: {selectedCharacter.med}</p>
-              <p>🌌 Long: {selectedCharacter.long}</p>
-              <p>🚀 Front: {selectedCharacter.front}</p>
-              <p>🏁 Pace: {selectedCharacter.pace}</p>
-              <p>🎯 Late: {selectedCharacter.late}</p>
-              <p>🔥 End: {selectedCharacter.end}</p>
-            </div>
+              {/* Stats Section */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <p>🏇 Turf: {selectedCharacter.turf}</p>
+                <p>🌋 Dirt: {selectedCharacter.dirt}</p>
+                <p>⚡ Sprint: {selectedCharacter.sprint}</p>
+                <p>🏃 Mile: {selectedCharacter.mile}</p>
+                <p>🏞️ Medium: {selectedCharacter.med}</p>
+                <p>🌌 Long: {selectedCharacter.long}</p>
+                <p>🚀 Front: {selectedCharacter.front}</p>
+                <p>🏁 Pace: {selectedCharacter.pace}</p>
+                <p>🎯 Late: {selectedCharacter.late}</p>
+                <p>🔥 End: {selectedCharacter.end}</p>
+              </div>
 
-            {/* Attributes */}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <p>Speed: {selectedCharacter.spd}</p>
-              <p>Stamina: {selectedCharacter.sta}</p>
-              <p>Power: {selectedCharacter.pow}</p>
-              <p>Guts: {selectedCharacter.gut}</p>
-              <p>Wisdom: {selectedCharacter.wit}</p>
-            </div>
+              {/* Attributes */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <p>Speed: {selectedCharacter.spd}</p>
+                <p>Stamina: {selectedCharacter.sta}</p>
+                <p>Power: {selectedCharacter.pow}</p>
+                <p>Guts: {selectedCharacter.gut}</p>
+                <p>Wisdom: {selectedCharacter.wit}</p>
+              </div>
 
-            {/* Skills */}
-            <div className="mt-4">
-              <h3 className="font-semibold">Innate Skills</h3>
-              <ul className="list-disc list-inside text-sm">
-                {selectedCharacter.innate_skills.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            </div>
+              {/* Skills */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-xl mb-2">Innate Skills</h3>
+                <ul className="list-disc list-inside text-sm">
+                  {selectedCharacter.innate_skills.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+              </div>
 
-            <div className="mt-4">
-              <h3 className="font-semibold">Potential Skills</h3>
-              <ul className="list-disc list-inside text-sm">
-                {selectedCharacter.potential_skills.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            </div>
+              <div className="mb-6">
+                <h3 className="font-semibold text-xl mb-2">Potential Skills</h3>
+                <ul className="list-disc list-inside text-sm">
+                  {selectedCharacter.potential_skills.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+              </div>
 
-            <div className="mt-4">
-              <h3 className="font-semibold">Training Tips</h3>
-              <ul className="list-disc list-inside text-sm">
-                {selectedCharacter.training_tips.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
+              <div>
+                <h3 className="font-semibold text-xl mb-2">Training Tips</h3>
+                <ul className="list-disc list-inside text-sm">
+                  {selectedCharacter.training_tips.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-400">Select a character to see details</p>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
