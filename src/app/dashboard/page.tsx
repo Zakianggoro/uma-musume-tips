@@ -34,6 +34,9 @@ interface Character {
 
 export default function DashboardPage() {
   const [session, setSession] = useState<any>(null);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [formData, setFormData] = useState<any>({
     name: "",
     image: "",
@@ -62,6 +65,7 @@ export default function DashboardPage() {
     training_tips: "",
   });
 
+  // 🔹 Fetch session
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -71,18 +75,22 @@ export default function DashboardPage() {
     });
   }, []);
 
-  async function handleLogin() {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: prompt("Email") || "",
-      password: prompt("Password") || "",
-    });
-    if (error) alert(error.message);
+  // 🔹 Fetch characters
+  async function fetchCharacters() {
+    setLoading(true);
+    const { data, error } = await supabase.from("characters").select("*");
+    if (error) console.error(error);
+    else setCharacters(data as Character[]);
+    setLoading(false);
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-  }
+  useEffect(() => {
+    if (session) {
+      fetchCharacters();
+    }
+  }, [session]);
 
+  // 🔹 Add new character
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -95,8 +103,63 @@ export default function DashboardPage() {
       },
     ]);
 
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("✅ Character added!");
+      setFormData({
+        name: "",
+        image: "",
+        overall: "",
+        ease: "",
+        cm: "",
+        t_trials: "",
+        turf: "",
+        dirt: "",
+        sprint: "",
+        mile: "",
+        med: "",
+        long: "",
+        front: "",
+        pace: "",
+        late: "",
+        end: "",
+        spd: "",
+        sta: "",
+        pow: "",
+        gut: "",
+        wit: "",
+        unique_skill: "",
+        innate_skills: "",
+        potential_skills: "",
+        training_tips: "",
+      });
+      fetchCharacters();
+    }
+  }
+
+  // 🔹 Delete character
+  async function deleteCharacter(id: string) {
+    const { error } = await supabase.from("characters").delete().eq("id", id);
+    if (error) {
+      alert(error.message);
+    } else {
+      setCharacters((prev) => prev.filter((char) => char.id !== id));
+      alert("✅ Character deleted!");
+    }
+  }
+
+  // 🔹 Auth
+  async function handleLogin() {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: prompt("Email") || "",
+      password: prompt("Password") || "",
+    });
     if (error) alert(error.message);
-    else alert("Character added!");
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
   }
 
   if (!session) {
@@ -118,9 +181,10 @@ export default function DashboardPage() {
         </button>
       </div>
 
+      {/* Form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-800 p-4 rounded-lg space-y-4 max-h-[80vh] overflow-y-scroll"
+        className="bg-gray-800 p-4 rounded-lg space-y-4 max-h-[80vh] overflow-y-scroll mb-8"
       >
         {Object.keys(formData).map((field) => (
           <input
@@ -137,6 +201,34 @@ export default function DashboardPage() {
           Save
         </button>
       </form>
+
+      {/* Character list */}
+      <h2 className="text-xl font-semibold mb-4">Characters</h2>
+      {loading ? (
+        <p>Loading...</p>
+      ) : characters.length === 0 ? (
+        <p>No characters yet.</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {characters.map((char) => (
+            <div key={char.id} className="bg-gray-800 p-4 rounded-lg shadow">
+              <img
+                src={char.image}
+                alt={char.name}
+                className="w-full h-32 object-cover rounded-lg"
+              />
+              <h3 className="mt-2 text-lg font-semibold">{char.name}</h3>
+              <p className="text-sm text-gray-400">Overall: {char.overall}</p>
+              <button
+                onClick={() => deleteCharacter(char.id)}
+                className="mt-3 bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </main>
   );
 }
