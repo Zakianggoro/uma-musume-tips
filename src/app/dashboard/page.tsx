@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { Session } from '@supabase/supabase-js';
 
 interface Character {
   id: string;
@@ -32,12 +33,40 @@ interface Character {
   training_tips: string[];
 }
 
+interface FormData {
+  name: string;
+  image: string;
+  overall: string;
+  ease: string;
+  cm: string;
+  t_trials: string;
+  turf: string;
+  dirt: string;
+  sprint: string;
+  mile: string;
+  med: string;
+  long: string;
+  front: string;
+  pace: string;
+  late: string;
+  end: string;
+  spd: string;
+  sta: string;
+  pow: string;
+  gut: string;
+  wit: string;
+  unique_skill: string;
+  innate_skills: string;
+  potential_skills: string;
+  training_tips: string;
+}
+
 export default function DashboardPage() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [formData, setFormData] = useState<any>({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
     image: "",
     overall: "",
@@ -151,9 +180,17 @@ export default function DashboardPage() {
 
   // 🔹 Auth
   async function handleLogin() {
+    const email = prompt("Email");
+    const password = prompt("Password");
+    
+    if (!email || !password) {
+      alert("Email and password are required");
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
-      email: prompt("Email") || "",
-      password: prompt("Password") || "",
+      email,
+      password,
     });
     if (error) alert(error.message);
   }
@@ -192,7 +229,7 @@ export default function DashboardPage() {
             type="text"
             placeholder={field.replace("_", " ")}
             className="w-full p-2 rounded text-black"
-            value={formData[field]}
+            value={formData[field as keyof FormData]}
             onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
           />
         ))}
@@ -212,6 +249,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {characters.map((char) => (
             <div key={char.id} className="bg-gray-800 p-4 rounded-lg shadow">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={char.image}
                 alt={char.name}
