@@ -37,7 +37,30 @@ export default function UmaMusumeTerminal() {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentView, setCurrentView] = useState<"stats" | "skills" | "training">("stats");
+  const [currentView, setCurrentView] = useState<"stats" | "skills" | "training" | "AI">("stats");
+
+  // Chat state for AI tab
+  const [messages, setMessages] = useState<{ role: string; text: string }[]>([]);
+  const [input, setInput] = useState("");
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+
+    // Show user’s command immediately
+    setMessages((prev) => [...prev, { role: "user", text: input }]);
+
+    const res = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: input }),
+    });
+
+    const data = await res.json();
+
+    // Show AI reply
+    setMessages((prev) => [...prev, { role: "ai", text: data.reply }]);
+    setInput("");
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -168,6 +191,14 @@ export default function UmaMusumeTerminal() {
                   : "border-gray-600 text-gray-400 hover:text-cyan-400"}`}
               >
                 TRAINING PROTOCOL
+              </button>
+              <button
+                onClick={() => setCurrentView("AI")}
+                className={`px-4 py-2 border ${currentView === "AI" 
+                  ? "border-cyan-400 bg-gray-800 text-cyan-300" 
+                  : "border-gray-600 text-gray-400 hover:text-cyan-400"}`}
+              >
+                AI ASSISTANT
               </button>
             </div>
           </div>
@@ -400,6 +431,101 @@ export default function UmaMusumeTerminal() {
                     </div>
                   </div>
                 )}
+
+                {currentView === "AI" && (
+                  <div className="space-y-6">
+                    {/* Terminal Chat Interface */}
+                    <div className="bg-gray-900 border border-cyan-600 h-96 flex flex-col">
+                      {/* Terminal Header */}
+                      <div className="bg-black border-b border-cyan-600 p-2 flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <div className="flex space-x-1">
+                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                          </div>
+                          <span className="text-cyan-400 text-xs font-bold">UMA_MUSUME_AI_CONSOLE</span>
+                        </div>
+                        <div className="text-cyan-400 text-xs">
+                          {formatTime(currentTime)} | SESSION_ACTIVE
+                        </div>
+                      </div>
+
+                      {/* Chat Messages Area */}
+                      <div className="flex-1 p-4 overflow-y-auto space-y-2 bg-black">
+                        {/* System Boot Message */}
+                        <div className="text-green-400 text-xs">
+                          <span className="text-gray-500">[{formatTime(currentTime)}]</span> SYSTEM_BOOT: Uma Musume AI Assistant v1.0.0
+                        </div>
+                        <div className="text-cyan-400 text-xs">
+                          <span className="text-gray-500">[{formatTime(currentTime)}]</span> DATABASE_LOADED: {characters.length} characters indexed
+                        </div>
+                        <div className="text-cyan-400 text-xs">
+                          <span className="text-gray-500">[{formatTime(currentTime)}]</span> SELECTED_TARGET: {selectedCharacter?.name || "NONE"}
+                        </div>
+                        <div className="text-yellow-400 text-xs mb-4">
+                          <span className="text-gray-500">[{formatTime(currentTime)}]</span> AI_STATUS: Ready for queries about Uma Musume
+                        </div>
+
+                        {/* AI Chat */}
+                        {messages.map((msg, i) => (
+                          <div
+                            key={i}
+                            className={`text-xs ${
+                              msg.role === "user" ? "text-cyan-400" : "text-green-400"
+                            }`}
+                          >
+                            <span className="text-gray-500">[{formatTime(new Date())}]</span>{" "}
+                            {msg.role === "user"
+                              ? `trainer@uma_system:~$ ${msg.text}`
+                              : `AI: ${msg.text}`}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Command Input */}
+                      <div className="bg-black border-t border-cyan-600 p-2">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-green-400 text-xs">trainer@uma_system:~$</span>
+                          <input
+                              type="text"
+                              value={input}
+                              onChange={(e) => setInput(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                              placeholder="Type your Uma Musume question here..."
+                              className="flex-1 bg-transparent text-cyan-400 text-xs focus:outline-none"
+                            />
+                          <button
+                            onClick={handleSend}
+                            className="text-cyan-400 text-xs hover:text-cyan-200 border border-cyan-600 px-2 py-1"
+                          >
+                            EXEC
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* System Information Panel */}
+                    <div className="bg-gray-900 border border-cyan-600 p-4">
+                      <h3 className="text-cyan-300 text-sm font-bold mb-3">AI SYSTEM STATUS</h3>
+                      <div className="grid grid-cols-2 gap-4 text-xs">
+                        <div className="space-y-1">
+                          <div>AI_MODEL: <span className="text-cyan-400">GEMINI-1.5-FLASH</span></div>
+                          <div>CONTEXT_CHARS: <span className="text-cyan-400">{characters.length}</span></div>
+                          <div>ACTIVE_SESSION: <span className="text-green-400">TRUE</span></div>
+                          <div>RESPONSE_TIME: <span className="text-cyan-400">~200ms</span></div>
+                        </div>
+                        <div className="space-y-1">
+                          <div>FOCUS_DOMAIN: <span className="text-yellow-400">UMA_MUSUME_ONLY</span></div>
+                          <div>KNOWLEDGE_BASE: <span className="text-cyan-400">GAME_MECHANICS</span></div>
+                          <div>QUERY_LIMIT: <span className="text-cyan-400">UNLIMITED</span></div>
+                          <div>PRIVACY_MODE: <span className="text-green-400">ENABLED</span></div>
+                        </div>
+                      </div>
+                    </div>
+                 </div>
+                )}
+                
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center">
